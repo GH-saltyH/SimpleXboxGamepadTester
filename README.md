@@ -50,11 +50,11 @@ Windows 11 환경에서 게임패드의 모든 입력 신호를 실시간으로 
 * **Center**: 진동(Motor) 테스트 설정 및 트리거 피드백.
 * **Bottom**: 아날로그 스틱, 십자키(D-Pad), 액션 버튼 배치.
 
-## ■ Setup Summary (셋업 요약)
+## ■ Summary
 
 * **Input Logic**: XInput 구조체의 비트마스킹을 통해 버튼 눌림을 판단하며, 스틱의 경우 `-32768 ~ 32767` 범위를 GUI 좌표로 정규화하여 출력합니다.
 * **Vibration Logic**: `winrt::init_apartment()`를 통한 WinRT 환경 초기화 후, `GamepadVibration` 구조체를 이용해 트리거와 메인 모터에 독립적인 전압 신호를 전달합니다.
 
 ---
-**Author**: [Your Name/GitHub ID]  
+**Author**: [GH-saltyH]  
 **Last Updated**: 2026-05-14
