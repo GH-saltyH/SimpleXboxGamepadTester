@@ -27,12 +27,24 @@ void RenderGamepadUI() {
             g_Gamepad.connected = false;
         }
     }
+    else {
+        g_Gamepad.connected = false;
+    }
 
-    // [L-STICK & R-STICK] (사각형 70x70, 원 반지름 2px)
-    auto DrawStick = [](const char* label, float thumbX, float thumbY) {
+    WORD buttons = g_Gamepad.state.Gamepad.wButtons;
+
+    // ----------------------------------------------------
+    // [L-STICK & R-STICK] (사각형 70x70, 원 반지름 2px) + 클릭 시 색상 채우기 
+    // ----------------------------------------------------
+    auto DrawStick = [](const char* label, float thumbX, float thumbY, bool isPressed) {
         ImVec2 p = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         float sz = 70.0f;
+
+        // 스틱 클릭 시 배경 색상 채우기 (약녹)
+        if (isPressed)
+            draw_list->AddRectFilled(p, ImVec2(p.x + sz, p.y + sz), IM_COL32(50, 180, 50, 100));
+
         draw_list->AddRect(p, ImVec2(p.x + sz, p.y + sz), IM_COL32_WHITE);
 
         float posX = p.x + (sz / 2.0f) + (thumbX / 32768.0f) * (sz / 2.0f);
@@ -44,26 +56,103 @@ void RenderGamepadUI() {
         ImGui::Text("X:%.0f Y:%.0f", thumbX, thumbY);
         };
 
-    ImGui::Columns(2, nullptr, false);
+    /*ImGui::Columns(2, nullptr, false);
     DrawStick("L-STICK", g_Gamepad.state.Gamepad.sThumbLX, g_Gamepad.state.Gamepad.sThumbLY);
     ImGui::NextColumn();
     DrawStick("R-STICK", g_Gamepad.state.Gamepad.sThumbRX, g_Gamepad.state.Gamepad.sThumbRY);
-    ImGui::Columns(1);
+    ImGui::Columns(1);*/
+    ImGui::SetCursorPos(ImVec2(20, 220));
+    ImGui::BeginGroup();
+    DrawStick("L-STICK", g_Gamepad.state.Gamepad.sThumbLX, g_Gamepad.state.Gamepad.sThumbLY, (buttons & XINPUT_GAMEPAD_LEFT_THUMB) != 0);
+    ImGui::EndGroup();
 
-    // [TRIGGER] (70x28, 진행 바 형태)
+    ImGui::SetCursorPos(ImVec2(320, 290));
+    ImGui::BeginGroup();
+    DrawStick("R-STICK", g_Gamepad.state.Gamepad.sThumbRX, g_Gamepad.state.Gamepad.sThumbRY, (buttons & XINPUT_GAMEPAD_RIGHT_THUMB) != 0);
+    ImGui::EndGroup();
+
+    // ----------------------------------------------------
+    // [LEFT/RIGHT TRIGGER & BUTTON(LB/RB)]
+    // ----------------------------------------------------
     auto DrawTrigger = [](const char* label, BYTE value) {
         float fraction = value / 255.0f;
         ImGui::Text("%s", label);
         ImGui::ProgressBar(fraction, ImVec2(70, 28), std::to_string(value).c_str());
         };
 
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 10);
-    DrawTrigger("LT", g_Gamepad.state.Gamepad.bLeftTrigger);
-    ImGui::SameLine();
-    DrawTrigger("RT", g_Gamepad.state.Gamepad.bRightTrigger);
+    auto DrawButton = [](const char* label, bool isPressed, ImVec2 size) {
+        if (isPressed) {
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
+            ImGui::Button(label, size);
+            ImGui::PopStyleColor();
+        }
+        else {
+            ImGui::Button(label, size); // 채우기 없음 효과 (기본 스타일 바디)
+        }
+        };
 
-    // [MOTOR TEST]
-    ImGui::SetCursorPos(ImVec2(150, 150));
+    // 왼쪽 트리거 & 범퍼 (LT / LB)
+    ImGui::SetCursorPos(ImVec2(120, 70));
+    ImGui::BeginGroup();
+    ImGui::Text("LT");
+    float lt_fraction = g_Gamepad.state.Gamepad.bLeftTrigger / 255.0f;
+    ImGui::ProgressBar(lt_fraction, ImVec2(70, 28), std::to_string(g_Gamepad.state.Gamepad.bLeftTrigger).c_str());
+    DrawButton("LB", (buttons & XINPUT_GAMEPAD_LEFT_SHOULDER) != 0, ImVec2(70, 28));
+    ImGui::EndGroup();
+
+    // 오른쪽 트리거 & 범퍼 (RT / RB)
+    ImGui::SetCursorPos(ImVec2(370, 70));
+    ImGui::BeginGroup();
+    ImGui::Text("RT");
+    float rt_fraction = g_Gamepad.state.Gamepad.bRightTrigger / 255.0f;
+    ImGui::ProgressBar(rt_fraction, ImVec2(70, 28), std::to_string(g_Gamepad.state.Gamepad.bRightTrigger).c_str());
+    DrawButton("RB", (buttons & XINPUT_GAMEPAD_RIGHT_SHOULDER) != 0, ImVec2(70, 28));
+    ImGui::EndGroup();
+
+    // ----------------------------------------------------
+    // [A, B, X, Y] 액션 버튼 영역 배치
+    // ----------------------------------------------------
+    ImGui::SetCursorPos(ImVec2(420, 180));
+    ImGui::BeginGroup();
+
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 45); // Y 버튼 (상단 가운데)
+    DrawButton("Y", (buttons & XINPUT_GAMEPAD_Y) != 0, ImVec2(40, 28));
+
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5);
+    DrawButton("X", (buttons & XINPUT_GAMEPAD_X) != 0, ImVec2(40, 28)); // X 버튼
+    ImGui::SameLine(0, 50);
+    DrawButton("B", (buttons & XINPUT_GAMEPAD_B) != 0, ImVec2(40, 28)); // B 버튼
+
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 5);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 45); // A 버튼 (하단 가운데)
+    DrawButton("A", (buttons & XINPUT_GAMEPAD_A) != 0, ImVec2(40, 28));
+
+    ImGui::EndGroup();
+
+    // ----------------------------------------------------
+    // [D-PAD] 십자키 영역 배치 (34x34 크기 정방형 크로스 배치)
+    // ----------------------------------------------------
+    ImGui::SetCursorPos(ImVec2(150, 280));
+    ImGui::BeginGroup();
+
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 39); // UP
+    DrawButton("UP", (buttons& XINPUT_GAMEPAD_DPAD_UP) != 0, ImVec2(34, 34));
+
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 2);
+    DrawButton("LEFT", (buttons& XINPUT_GAMEPAD_DPAD_LEFT) != 0, ImVec2(34, 34));
+    ImGui::SameLine(0, 38);
+    DrawButton("RIGHT", (buttons& XINPUT_GAMEPAD_DPAD_RIGHT) != 0, ImVec2(34, 34));
+
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 2);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 39); // DOWN
+    DrawButton("DOWN", (buttons& XINPUT_GAMEPAD_DPAD_DOWN) != 0, ImVec2(34, 34));
+
+    ImGui::EndGroup();
+
+    // ----------------------------------------------------
+    // [MOTOR TEST & CHECKBOX] WinRT 진동 시스템 제어
+    // ----------------------------------------------------
+    ImGui::SetCursorPos(ImVec2(220, 150));
     ImGui::BeginGroup();
     ImGui::Text("MOTOR TEST");
     ImGui::Checkbox("Impulse Trigger", &g_ImpulseEnabled);
@@ -72,21 +161,50 @@ void RenderGamepadUI() {
     ImGui::EndGroup();
 
     // 진동 실행 로직
+    // WinRT 디바이스 기반 정밀 진동 제어 수행
     if (g_SelectedIdx != -1 && g_Gamepad.connected) {
-        XINPUT_VIBRATION vib = { 0, 0 };
-        if (g_LeftVibEnabled && (g_Gamepad.state.Gamepad.wButtons & XINPUT_GAMEPAD_X)) vib.wLeftMotorSpeed = 65535;
-        if (g_RightVibEnabled && (g_Gamepad.state.Gamepad.wButtons & XINPUT_GAMEPAD_B)) vib.wRightMotorSpeed = 65535;
-        XInputSetState(g_SelectedIdx, &vib);
+        auto gamepads = Gamepad::Gamepads();
+        if (g_SelectedIdx < (int)gamepads.Size()) {
+            auto winrtGamepad = gamepads.GetAt(g_SelectedIdx);
+            GamepadVibration vibration{};
+
+            // 1. 임펄스 트리거 제어 (정비례 입력값 생성)
+            if (g_ImpulseEnabled) {
+                vibration.LeftTrigger = (double)g_Gamepad.state.Gamepad.bLeftTrigger / 255.0;
+                vibration.RightTrigger = (double)g_Gamepad.state.Gamepad.bRightTrigger / 255.0;
+            }
+
+            // 2. 메인 좌/우 대형 모터 제어 (X, B 버튼 조건식 매핑)
+            if (g_LeftVibEnabled && (buttons & XINPUT_GAMEPAD_X)) {
+                vibration.LeftMotor = 1.0; // 최대 세기
+            }
+            if (g_RightVibEnabled && (buttons & XINPUT_GAMEPAD_B)) {
+                vibration.RightMotor = 1.0;
+            }
+
+            winrtGamepad.Vibration(vibration);
+        }
     }
+
+    // xinput 작동하지 않아 winrt 진동 시스템 제어로 대체함
+    //if (g_SelectedIdx != -1 && g_Gamepad.connected) {
+    //    XINPUT_VIBRATION vib = { 0, 0 };
+    //    if (g_LeftVibEnabled && (g_Gamepad.state.Gamepad.wButtons & XINPUT_GAMEPAD_X)) vib.wLeftMotorSpeed = 65535;
+    //    if (g_RightVibEnabled && (g_Gamepad.state.Gamepad.wButtons & XINPUT_GAMEPAD_B)) vib.wRightMotorSpeed = 65535;
+    //    XInputSetState(g_SelectedIdx, &vib);
+    //}
 
     ImGui::End();
 }
 
 // 메인 진입점
 int main(int, char**) {
+    // WinRT 구성 요소 초기화 (진동 런타임 가동용)
+    winrt::init_apartment();
+
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"GamepadTester", nullptr };
     RegisterClassExW(&wc);
-    HWND hwnd = CreateWindowW(wc.lpszClassName, L"Gamepad Tester - XInput", WS_OVERLAPPEDWINDOW, 100, 100, 600, 500, nullptr, nullptr, wc.hInstance, nullptr);
+    HWND hwnd = CreateWindowW(wc.lpszClassName, L"Gamepad Tester - Advanced", WS_OVERLAPPEDWINDOW, 100, 100, 600, 520, nullptr, nullptr, wc.hInstance, nullptr);
 
     if (!CreateDeviceD3D(hwnd)) {
         CleanupDeviceD3D();
@@ -97,13 +215,13 @@ int main(int, char**) {
     ShowWindow(hwnd, SW_SHOWDEFAULT);
     UpdateWindow(hwnd);
 
-    // ImGui Init
+    // ImGui 컨텍스트 생성
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui_ImplWin32_Init(hwnd);
     ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
-    // 메인 루프
+    // 메인 메시지 루프
     bool done = false;
     while (!done) {
         MSG msg;
@@ -121,15 +239,22 @@ int main(int, char**) {
         RenderGamepadUI();
 
         ImGui::Render();
-        const float clear_color_with_alpha[4] = { 0.1f, 0.1f, 0.1f, 1.00f };
+        const float clear_color_with_alpha[4] = { 0.15f, 0.15f, 0.15f, 1.00f };
         g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
         g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-        g_pSwapChain->Present(1, 0); // VSync
+        g_pSwapChain->Present(1, 0);    // Vsync 활성 (1프레임마다)
     }
 
     // Cleanup
+
+    // 종료 시 진동 리셋 유도
+    auto gamepads = Gamepad::Gamepads();
+    if (g_SelectedIdx >= 0 && g_SelectedIdx < (int)gamepads.Size()) {
+        gamepads.GetAt(g_SelectedIdx).Vibration(GamepadVibration{});
+    }
+
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
