@@ -3,7 +3,7 @@
 
 Windows 11 환경에서 게임패드의 모든 입력 신호를 실시간으로 시각화하고, 모터 및 임펄스 트리거(Impulse Trigger)의 성능을 정밀하게 테스트할 수 있는 C++ 기반 GUI 애플리케이션입니다.
 
-<img width="557" height="483" alt="컨트롤러테스트기GUI초안" src="https://github.com/user-attachments/assets/af3fcb4c-c931-4980-bb58-6d90158522fc" />
+<img width="557" height="483" alt="컨트롤러테스트기GUI초안" src="https://github.com/user-attachments/assets/8b98bc50-e54d-4cdd-93eb-1c14b9d5dcd2" />
 <img width="586" height="513" alt="example" src="https://github.com/user-attachments/assets/3f337874-2f8b-4e30-a234-375f8c3aa5d5" />
 
 
