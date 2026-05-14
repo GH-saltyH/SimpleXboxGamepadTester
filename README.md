@@ -17,13 +17,13 @@ Windows 11 환경에서 게임패드의 모든 입력 신호를 실시간으로 
 
 ## ■ Tech Stack
 
-● **Language**: C++ 17 이상
-● **Graphics API**: DirectX 11
-● **GUI Library**: [Dear ImGui](https://github.com/ocornut/imgui)
-● **Input API**:
-  * XInput (Standard Input)
-  * Windows Runtime (Windows.Gaming.Input) for Impulse Triggers
-● **IDE**: Visual Studio 2022
+● **Language**: C++ 17 이상 
+● **Graphics API**: DirectX 11 
+● **GUI Library**: [Dear ImGui](https://github.com/ocornut/imgui) 
+● **Input API**: 
+  * XInput (Standard Input) 
+  * Windows Runtime (Windows.Gaming.Input) for Impulse Triggers 
+● **IDE**: Visual Studio 2022 
 
 ## ■ Development Environment Setup
 
